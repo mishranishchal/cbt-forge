@@ -1,0 +1,13 @@
+[SECTION: Reasoning]
+
+Q1. Example question?
+A. Option A
+B. Option B
+C. Option C
+D. Option D
+
+ANSWER: B
+EXPLANATION:
+Example explanation.
+TOPIC: Example
+DIFFICULTY: Easy

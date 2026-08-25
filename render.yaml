@@ -1,0 +1,33 @@
+services:
+  - type: web
+    name: cbt-forge-backend
+    runtime: docker
+    plan: free
+    region: singapore
+    dockerfilePath: ./backend/Dockerfile
+    dockerContext: ./backend
+    healthCheckPath: /api/health
+    envVars:
+      - key: CORS_ORIGINS
+        value: http://localhost:3000
+
+      - key: CBT_FORGE_DB
+        value: /app/data/cbt_forge.sqlite
+
+      - key: PYTHONUNBUFFERED
+        value: "1"
+
+  - type: web
+    name: cbt-forge-frontend
+    runtime: node
+    plan: free
+    region: singapore
+    rootDir: frontend
+    buildCommand: npm ci && npm run build
+    startCommand: npm start
+    envVars:
+      - key: NEXT_PUBLIC_API_BASE_URL
+        fromService:
+          type: web
+          name: cbt-forge-backend
+          envVarKey: RENDER_EXTERNAL_URL

@@ -1,0 +1,49 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: light;
+}
+
+body {
+  background: #f7f8fb;
+  color: #172033;
+}
+
+[data-theme="dark"] body {
+  background: #0f172a;
+  color: #e2e8f0;
+}
+
+[data-theme="dark"] .bg-white {
+  background-color: #111827;
+}
+
+[data-theme="dark"] .text-ink {
+  color: #e5e7eb;
+}
+
+[data-theme="dark"] .text-steel {
+  color: #cbd5e1;
+}
+
+[data-theme="dark"] .border-line {
+  border-color: #334155;
+}
+
+[data-theme="dark"] .bg-\[\#f7f8fb\],
+[data-theme="dark"] .bg-\[\#fafbfc\] {
+  background-color: #0f172a;
+}
+
+button,
+input,
+textarea,
+select {
+  font: inherit;
+}
+
+.focus-ring {
+  @apply focus:outline-none focus:ring-2 focus:ring-forge/30 focus:border-forge;
+}

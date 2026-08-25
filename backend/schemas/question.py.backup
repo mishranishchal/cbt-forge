@@ -1,0 +1,109 @@
+from enum import Enum
+from typing import Literal
+
+from pydantic import BaseModel, Field, field_validator, model_validator
+
+
+class QuestionType(str, Enum):
+    single_choice = "single_choice"
+    multiple_choice = "multiple_choice"
+    true_false = "true_false"
+    image_based = "image_based"
+    unknown = "unknown"
+
+
+class Difficulty(str, Enum):
+    easy = "easy"
+    medium = "medium"
+    hard = "hard"
+    unknown = "unknown"
+
+
+class ValidationStatus(str, Enum):
+    valid = "valid"
+    warning = "warning"
+    error = "error"
+
+
+class Option(BaseModel):
+    id: str = Field(min_length=1, max_length=8)
+    text: str = ""
+    images: list["QuestionImage"] = Field(default_factory=list)
+
+
+class QuestionImage(BaseModel):
+    id: str | None = None
+    path: str
+    filename: str | None = None
+    mime_type: str | None = None
+    alt_text: str | None = None
+    width: int | None = None
+    height: int | None = None
+    type: Literal["question_image", "page_render", "embedded_image"] = "question_image"
+    page_number: int | None = None
+
+
+class Explanation(BaseModel):
+    text: str | None = None
+    images: list[QuestionImage] = Field(default_factory=list)
+
+
+class Question(BaseModel):
+    id: str
+    question_number: int | None = None
+    section: str | None = None
+    topic: str | None = None
+    subtopic: str | None = None
+    question_type: QuestionType = QuestionType.unknown
+    question_text: str
+    question_images: list[QuestionImage] = Field(default_factory=list)
+    options: list[Option] = Field(default_factory=list)
+    correct_answer: list[str] | None = None
+    explanation: Explanation | None = None
+    difficulty: Difficulty = Difficulty.unknown
+    source_page: int | None = None
+    confidence: float = Field(default=0.0, ge=0.0, le=1.0)
+    validation_status: ValidationStatus = ValidationStatus.warning
+    warnings: list[str] = Field(default_factory=list)
+
+    @model_validator(mode="before")
+    @classmethod
+    def normalize_legacy_fields(cls, value: object) -> object:
+        if not isinstance(value, dict):
+            return value
+        data = dict(value)
+        data.setdefault("question_images", data.pop("images", []))
+        explanation = data.get("explanation")
+        if isinstance(explanation, str):
+            data["explanation"] = {"text": explanation, "images": []}
+        return data
+
+    @property
+    def images(self) -> list[QuestionImage]:
+        """Legacy read alias retained for PDF-generated questions and older UI paths."""
+        return self.question_images
+
+    @field_validator("correct_answer")
+    @classmethod
+    def normalize_correct_answer(cls, value: list[str] | None) -> list[str] | None:
+        if value is None:
+            return None
+        normalized = [item.strip().upper() for item in value if item and item.strip()]
+        return normalized or None
+
+
+class QuestionUpdate(BaseModel):
+    question_number: int | None = None
+    section: str | None = None
+    topic: str | None = None
+    subtopic: str | None = None
+    question_type: QuestionType | None = None
+    question_text: str | None = None
+    question_images: list[QuestionImage] | None = None
+    images: list[QuestionImage] | None = None
+    options: list[Option] | None = None
+    correct_answer: list[str] | None = None
+    explanation: Explanation | str | None = None
+    difficulty: Difficulty | None = None
+    source_page: int | None = None
+    confidence: float | None = Field(default=None, ge=0.0, le=1.0)

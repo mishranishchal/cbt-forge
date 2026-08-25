@@ -1,0 +1,246 @@
+export type FileRole = "question_paper" | "answer_key" | "explanation" | "other";
+export type QuestionType = "single_choice" | "multiple_choice" | "true_false" | "image_based" | "unknown";
+export type ValidationStatus = "valid" | "warning" | "error";
+
+export interface Option {
+  id: string;
+  text: string;
+  images?: QuestionImage[];
+}
+
+export interface QuestionImage {
+  id?: string | null;
+  path: string;
+  filename?: string | null;
+  mime_type?: string | null;
+  alt_text?: string | null;
+  width?: number | null;
+  height?: number | null;
+  type: "question_image" | "page_render" | "embedded_image";
+  page_number?: number | null;
+}
+
+export interface Explanation {
+  text: string | null;
+  images: QuestionImage[];
+}
+
+export interface Question {
+  id: string;
+  question_number: number | null;
+  section: string | null;
+  topic: string | null;
+  subtopic: string | null;
+  question_type: QuestionType;
+  question_text: string;
+  question_images: QuestionImage[];
+  options: Option[];
+  correct_answer: string[] | null;
+  explanation: Explanation | null;
+  difficulty: "easy" | "medium" | "hard" | "unknown";
+  source_page: number | null;
+  confidence: number;
+  validation_status: ValidationStatus;
+  warnings: string[];
+}
+
+export interface ExtractionSummary {
+  questions_found: number;
+  valid: number;
+  warnings: number;
+  errors: number;
+  pages_total: number;
+  pages_processed: number;
+  pages_ocr: number;
+  pages_failed: number;
+  warnings_list: string[];
+}
+
+export interface ExtractResponse {
+  test_id: string;
+  status: string;
+  message: string;
+  summary: ExtractionSummary;
+  questions: Question[];
+}
+
+export type TimingMode = "single" | "section";
+
+export interface MarkingScheme {
+  correct: number;
+  wrong: number;
+  unattempted: number;
+}
+
+export interface TimingConfig {
+  mode: TimingMode;
+  total_minutes: number;
+}
+
+export interface NavigationConfig {
+  section_switching: boolean;
+  back_navigation: boolean;
+  previous_question: boolean;
+  next_question: boolean;
+  clear_response: boolean;
+  mark_for_review: boolean;
+  question_palette: boolean;
+}
+
+export interface BehaviorConfig {
+  shuffle_questions: boolean;
+  shuffle_options: boolean;
+  auto_submit: boolean;
+}
+
+export interface TestMetadata {
+  id: string;
+  title: string;
+  description: string;
+  instructions: string;
+  timing: TimingConfig;
+  navigation: NavigationConfig;
+  behavior: BehaviorConfig;
+  global_marking: MarkingScheme;
+  use_global_marking: boolean;
+}
+
+export interface TestSection {
+  id: string;
+  name: string;
+  description: string;
+  duration_minutes: number;
+  expected_question_count: number | null;
+  marking: MarkingScheme;
+  question_ids: string[];
+  selection_mode: "automatic" | "manual";
+  allow_section_switching: boolean;
+}
+
+export interface TestConfiguration {
+  test: TestMetadata;
+  sections: TestSection[];
+}
+
+export interface ConfigurationValidationResult {
+  valid: boolean;
+  errors: string[];
+  warnings: string[];
+}
+
+export type AttemptStatus = "NOT_STARTED" | "IN_PROGRESS" | "COMPLETED" | "TIMED_OUT" | "ABANDONED";
+export type RuntimeStatus = "NOT_VISITED" | "NOT_ANSWERED" | "ANSWERED" | "MARKED_FOR_REVIEW" | "ANSWERED_AND_MARKED";
+
+export interface AttemptResponse {
+  attempt_id: string;
+  question_id: string;
+  selected_answers: string[];
+  visited: boolean;
+  marked_for_review: boolean;
+  status: RuntimeStatus;
+  time_spent_seconds: number;
+  last_updated: string;
+}
+
+export interface Attempt {
+  attempt_id: string;
+  test_id: string;
+  start_time: string;
+  end_time: string | null;
+  status: AttemptStatus;
+  current_section: string | null;
+  current_question: string | null;
+  remaining_time_seconds: number;
+  section_timers: Record<string, { remaining_seconds: number; entered_at: string | null; finished: boolean }>;
+  submission_reason: string | null;
+  configuration: TestConfiguration;
+  questions: Question[];
+  responses: Record<string, AttemptResponse>;
+  events: {
+    tab_hidden_count: number;
+    tab_visible_count: number;
+    recent: unknown[];
+  };
+}
+
+export interface QuestionResult {
+  question_id: string;
+  section_id: string | null;
+  topic: string | null;
+  subtopic: string | null;
+  difficulty: string;
+  question_number: number | null;
+  time_spent_seconds: number;
+  visited: boolean;
+  marked_for_review: boolean;
+  runtime_status: RuntimeStatus;
+  status: "correct" | "wrong" | "unattempted";
+  marks: number;
+  selected_answers: string[];
+  correct_answer: string[];
+  is_correct: boolean;
+}
+
+export interface ScoringSummary {
+  score: number;
+  maximum_score: number;
+  percentage: number;
+  attempted: number;
+  correct: number;
+  wrong: number;
+  unattempted: number;
+  accuracy: number;
+  total_questions: number;
+  question_results: QuestionResult[];
+}
+
+export interface AnalysisGroup {
+  id?: string;
+  name: string;
+  questions: number;
+  attempted: number;
+  correct: number;
+  wrong: number;
+  unattempted: number;
+  score: number;
+  accuracy: number;
+  average_time: number;
+  classification: "STRONG" | "AVERAGE" | "WEAK" | "INSUFFICIENT DATA";
+}
+
+export interface ResultPayload {
+  attempt_id: string;
+  test_id: string;
+  status: AttemptStatus;
+  submission_reason: string;
+  start_time: string;
+  end_time: string;
+  time_used_seconds: number;
+  configuration: TestConfiguration;
+  questions: Question[];
+  responses: Record<string, AttemptResponse>;
+  scoring: ScoringSummary;
+  analytics: {
+    section_analysis: AnalysisGroup[];
+    topic_analysis: AnalysisGroup[];
+    subtopic_analysis: AnalysisGroup[];
+    strengths: AnalysisGroup[];
+    weaknesses: AnalysisGroup[];
+    insufficient_topics: AnalysisGroup[];
+    display: { score: number; maximum_score: number; percentage: number; accuracy: number };
+  };
+  ai_analysis: Record<string, unknown> | null;
+}
+
+export interface HistoryItem {
+  attempt_id: string;
+  test_id: string;
+  title: string;
+  date: string;
+  status: AttemptStatus;
+  score: number | null;
+  maximum_score: number | null;
+  accuracy: number | null;
+  attempted: number | null;
+  total_questions: number | null;
+}
