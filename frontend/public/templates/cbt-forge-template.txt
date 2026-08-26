@@ -1,6 +1,11 @@
+# CBT Forge TXT Question Template
+# Configure the overall or section-wise marking mode in Configure after import.
+# Per-question marks below override the configured test/section rule.
+# For multiple-select answers, use commas, spaces, semicolons, or separate lines.
+
 [SECTION: Reasoning]
 
-Q1. Example MCQ question?
+Q1. Example single-choice question?
 TYPE: single_choice
 A. Option A
 B. Option B
@@ -22,35 +27,77 @@ ANSWER: A, C
 CORRECT_MARKS: 2
 INCORRECT_MARKS: -0.5
 UNATTEMPTED_MARKS: 0
+EXPLANATION:
+2 and 5 are prime numbers.
 TOPIC: Number System
 DIFFICULTY: Medium
 
+Q3. CBT Forge is a test platform.
+TYPE: true_false
+A. True
+B. False
+ANSWER: A
+TOPIC: Boolean Logic
+DIFFICULTY: Easy
+
 [SECTION: Numerical]
 
-Q3. What is 6 multiplied by 7?
+Q4. What is 6 multiplied by 7?
 TYPE: integer
 ANSWER: 42
+CORRECT_MARKS: 4
+INCORRECT_MARKS: -1
+UNATTEMPTED_MARKS: 0
+EXPLANATION:
+6 x 7 = 42.
 TOPIC: Arithmetic
 DIFFICULTY: Easy
 
-Q4. Enter pi rounded to two decimal places.
+Q5. Enter pi rounded to two decimal places.
 TYPE: numerical_tolerance
 ANSWER: 3.14159
 TOLERANCE: 0.01
 TOPIC: Numerical
 DIFFICULTY: Medium
 
+Q6. Enter the square root of 2.
+TYPE: real_number
+ANSWER: 1.41421356
+TOPIC: Real Numbers
+DIFFICULTY: Medium
+
 [SECTION: Language]
 
-Q5. Name the capital of India.
+Q7. Name the capital of India.
 TYPE: short_answer
 ANSWER: New Delhi
+ACCEPTED_ANSWERS: Delhi; New Delhi, India
 TOPIC: General Knowledge
 DIFFICULTY: Easy
 
-Q6. Explain the difference between a fact and an opinion.
+Q8. Explain the difference between a fact and an opinion.
 TYPE: long_answer
 TOPIC: Writing
 DIFFICULTY: Medium
 
-Use the JSON template for image-based questions and for complete overall or section-wise test configuration.
+[SECTION: Visual Reasoning]
+
+Q9. Choose the figure that completes the sequence.
+TYPE: image_based
+QUESTION_IMAGE: sequence.png
+A. Option A
+OPTION_IMAGE: A, sequence-a.png
+B. Option B
+OPTION_IMAGE: B, sequence-b.png
+ANSWER: B
+EXPLANATION:
+The shape rotates clockwise.
+EXPLANATION_IMAGE: sequence-solution.png
+CORRECT_MARKS: 3
+INCORRECT_MARKS: -1
+UNATTEMPTED_MARKS: 0
+TOPIC: Non Verbal Reasoning
+DIFFICULTY: Medium
+
+# Upload JSON together with referenced image assets, or upload the images in Review
+# and attach them to the corresponding question, option, or explanation.

@@ -39,6 +39,45 @@ def test_txt_input_and_answer_normalization() -> None:
     assert normalized[0].explanation and normalized[0].explanation.text == "2 + 2 = 4."
 
 
+def test_txt_typed_answers_and_image_references_are_normalized() -> None:
+    source = """[SECTION: Mixed]
+Q1. Select all prime numbers.
+TYPE: multiple_select
+A. 2
+B. 4
+C. 5
+ANSWER: A, C
+
+Q2. Calculate 6 x 7.
+TYPE: integer
+ANSWER: 42
+
+Q3. Name the capital of India.
+TYPE: short_answer
+ANSWER: New Delhi
+ACCEPTED_ANSWERS: Delhi; New Delhi, India
+
+Q4. Choose the figure.
+TYPE: image_based
+QUESTION_IMAGE: q4.png
+A. First figure
+OPTION_IMAGE: A, q4-a.png
+B. Second figure
+ANSWER: B
+EXPLANATION: See the solution.
+EXPLANATION_IMAGE: q4-solution.png
+"""
+    questions = normalize_questions(parse_text(source))
+
+    assert questions[0].answer_config.correct_answers == ["A", "C"]
+    assert questions[1].numerical_answer and str(questions[1].numerical_answer.value) == "42"
+    assert questions[2].answer_config.correct_answers == ["New Delhi"]
+    assert questions[2].answer_config.accepted_answers == ["Delhi", "New Delhi, India"]
+    assert questions[3].question_images[0].filename == "q4.png"
+    assert questions[3].options[0].images[0].filename == "q4-a.png"
+    assert questions[3].explanation and questions[3].explanation.images[0].filename == "q4-solution.png"
+
+
 def test_empty_txt_is_allowed_without_questions() -> None:
     path = unit_dir() / "empty.txt"
     path.write_text("\n", encoding="utf-8")

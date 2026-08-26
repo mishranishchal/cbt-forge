@@ -1002,6 +1002,23 @@ def normalize_question(
     # Final Question
     # --------------------------------------------------------------
 
+    answer_config = data.get("answer_config")
+    answer_config = dict(answer_config) if isinstance(answer_config, dict) else {}
+
+    if answer and not answer_config.get("correct_answers"):
+        answer_config["correct_answers"] = list(answer)
+
+    if "accepted_answers" not in answer_config and data.get("accepted_answers"):
+        accepted = data["accepted_answers"]
+        answer_config["accepted_answers"] = (
+            [item.strip() for item in re.split(r"[;\n]", accepted) if item.strip()]
+            if isinstance(accepted, str)
+            else accepted
+        )
+
+    if raw_type == "numerical_tolerance" and not answer_config.get("tolerance"):
+        answer_config["tolerance"] = data.get("tolerance", numerical_answer.tolerance if numerical_answer else "0")
+
     question_data: dict[str, Any] = {
         "id": str(
             data.get(
@@ -1050,6 +1067,8 @@ def normalize_question(
         "options": options,
 
         "correct_answer": answer,
+
+        "answer_config": answer_config,
 
         "explanation": explanation,
 

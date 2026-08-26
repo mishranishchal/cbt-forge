@@ -75,8 +75,18 @@ function defaultInputMode(type: QuestionType): AnswerInputMode | null {
   return null;
 }
 
-function splitAnswers(value: string, uppercase: boolean) {
-  return value.split(",").map(v => v.trim()).filter(Boolean).map(v => uppercase ? v.toUpperCase() : v);
+function splitChoiceAnswers(value: string) {
+  return value
+    .split(/[;,\n\s]+/)
+    .map((item) => item.trim().toUpperCase())
+    .filter(Boolean);
+}
+
+function splitAliases(value: string) {
+  return value
+    .split(/[;\n]+/)
+    .map((item) => item.trim())
+    .filter(Boolean);
 }
 
 export function QuestionEditor({
@@ -155,19 +165,34 @@ export function QuestionEditor({
           </Field>
         </div>
 
-        <div className="mt-3">
-          <Field label="Correct answer(s)">
-            <input className={input} value={correct.join(", ")} placeholder={choiceTypes.has(question.question_type) ? "A, C" : "10 or expected answer"}
-              onChange={e => {
-                const values = splitAnswers(e.target.value, choiceTypes.has(question.question_type));
-                patch({ correct_answer: values.length ? values : null, answer_config:{...question.answer_config,correct_answers:values} });
-              }}/>
-          </Field>
-        </div>
+        {choiceTypes.has(question.question_type) && (
+          <div className="mt-3">
+            <Field label={question.question_type === "multiple_choice" || question.question_type === "multiple_select" ? "Correct options" : "Correct option"}>
+              <input className={input} value={correct.join(", ")} placeholder={question.question_type === "multiple_choice" || question.question_type === "multiple_select" ? "A, C (commas, spaces, or new lines)" : "B"}
+                onChange={e => {
+                  const values = splitChoiceAnswers(e.target.value);
+                  patch({ correct_answer: values.length ? values : null, answer_config:{...question.answer_config,correct_answers:values} });
+                }}/>
+            </Field>
+          </div>
+        )}
+
+        {question.question_type === "short_answer" && (
+          <div className="mt-3">
+            <Field label="Expected answer">
+              <input className={input} value={correct[0] ?? ""} placeholder="Enter the exact expected answer"
+                onChange={e => {
+                  const value = e.target.value;
+                  const values = value.trim() ? [value] : [];
+                  patch({ correct_answer: values.length ? values : null, answer_config:{...question.answer_config,correct_answers:values} });
+                }}/>
+            </Field>
+          </div>
+        )}
 
         {(question.question_type === "short_answer" || question.question_type === "long_answer") && (
           <>
-            <div className="mt-3"><Field label="Accepted answers / aliases"><input className={input} value={aliases.join(", ")} placeholder="New Delhi, Delhi NCR" onChange={e=>patchAnswer({accepted_answers:splitAnswers(e.target.value,false)})}/></Field></div>
+            <div className="mt-3"><Field label="Accepted answers / aliases"><input className={input} value={aliases.join(", ")} placeholder="New Delhi; Delhi NCR" onChange={e=>patchAnswer({accepted_answers:splitAliases(e.target.value)})}/></Field></div>
             <label className="mt-3 flex items-center gap-2 text-sm text-ink"><input type="checkbox" checked={question.answer_config.case_sensitive} onChange={e=>patchAnswer({case_sensitive:e.target.checked})}/> Case-sensitive</label>
           </>
         )}
@@ -177,7 +202,7 @@ export function QuestionEditor({
         )}
 
         {["integer", "real_number", "numerical_tolerance"].includes(question.question_type) && (
-          <div className="mt-3 grid gap-3 md:grid-cols-2"><Field label="Numerical answer"><input className={input} value={question.numerical_answer?.value ?? correct[0] ?? ""} placeholder={question.question_type === "integer" ? "42" : "10.5"} onChange={e=>{const value=e.target.value;patch({ numerical_answer:{ ...(question.numerical_answer ?? {}), value, tolerance: question.question_type === "numerical_tolerance" ? question.answer_config.tolerance ?? "0" : "0" }, correct_answer:value?[value]:null, answer_config:{...question.answer_config,correct_answers:value?[value]:[]} }); }}/></Field><Field label="Tolerance"><input className={input} disabled={question.question_type !== "numerical_tolerance"} value={question.answer_config.tolerance ?? question.numerical_answer?.tolerance ?? "0"} onChange={e=>patch({ numerical_answer:{ ...(question.numerical_answer ?? {}), value:question.numerical_answer?.value ?? correct[0] ?? null, tolerance:e.target.value || "0" }, answer_config:{...question.answer_config,tolerance:e.target.value || null} })}/></Field></div>
+          <div className="mt-3 grid gap-3 md:grid-cols-2"><Field label="Numerical answer"><input className={input} value={question.numerical_answer?.value ?? correct[0] ?? ""} placeholder={question.question_type === "integer" ? "42" : "10.5"} onChange={e=>{const value=e.target.value.trim(); const values=value?[value]:[]; patch({ numerical_answer:{ ...(question.numerical_answer ?? {}), value:value || null, tolerance: question.question_type === "numerical_tolerance" ? question.answer_config.tolerance ?? "0" : "0" }, correct_answer:values.length?values:null, answer_config:{...question.answer_config,correct_answers:values} }); }}/></Field><Field label="Tolerance"><input className={input} disabled={question.question_type !== "numerical_tolerance"} value={question.answer_config.tolerance ?? question.numerical_answer?.tolerance ?? "0"} onChange={e=>patch({ numerical_answer:{ ...(question.numerical_answer ?? {}), value:question.numerical_answer?.value ?? correct[0] ?? null, tolerance:e.target.value || "0" }, answer_config:{...question.answer_config,tolerance:e.target.value || null} })}/></Field></div>
         )}
 
         {question.question_type === "long_answer" && <div className="mt-3 rounded border border-amber-200 bg-amber-50 p-3 text-xs text-amber-800">Long answers are normally evaluated manually.</div>}
