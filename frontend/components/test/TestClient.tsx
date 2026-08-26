@@ -612,6 +612,14 @@ export function TestClient({ testId }: { testId: string }) {
       return;
     }
 
+    if (
+      !section.allow_section_switching &&
+      section.id !== attempt.current_section
+    ) {
+      setError(`Switching to ${section.name} is disabled.`);
+      return;
+    }
+
     const firstQuestion = sectionQuestions(
       section,
       attempt.questions

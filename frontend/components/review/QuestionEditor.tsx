@@ -39,7 +39,7 @@
 
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { imageUrl, uploadImage } from "@/lib/api";
 import type {
   AnswerInputMode,
@@ -103,6 +103,21 @@ export function QuestionEditor({
   const updateOption = (i: number, option: Option) =>
     patch({ options: question.options.map((x, n) => n === i ? option : x) });
   const explanation: Explanation = question.explanation ?? { text: null, images: [] };
+  const [choiceAnswerText, setChoiceAnswerText] = useState(
+    question.answer_config.correct_answers.join(", ")
+  );
+
+  useEffect(() => {
+    setChoiceAnswerText(question.answer_config.correct_answers.join(", "));
+  }, [question.id, question.answer_config.correct_answers]);
+
+  function saveChoiceAnswers() {
+    const values = splitChoiceAnswers(choiceAnswerText);
+    patch({
+      correct_answer: values.length ? values : null,
+      answer_config: { ...question.answer_config, correct_answers: values },
+    });
+  }
 
   function changeType(type: QuestionType) {
     patch({
@@ -168,11 +183,8 @@ export function QuestionEditor({
         {choiceTypes.has(question.question_type) && (
           <div className="mt-3">
             <Field label={question.question_type === "multiple_choice" || question.question_type === "multiple_select" ? "Correct options" : "Correct option"}>
-              <input className={input} value={correct.join(", ")} placeholder={question.question_type === "multiple_choice" || question.question_type === "multiple_select" ? "A, C (commas, spaces, or new lines)" : "B"}
-                onChange={e => {
-                  const values = splitChoiceAnswers(e.target.value);
-                  patch({ correct_answer: values.length ? values : null, answer_config:{...question.answer_config,correct_answers:values} });
-                }}/>
+              <input className={input} value={choiceAnswerText} placeholder={question.question_type === "multiple_choice" || question.question_type === "multiple_select" ? "A, C (commas, spaces, or new lines)" : "B"}
+                onChange={e => setChoiceAnswerText(e.target.value)} onBlur={saveChoiceAnswers}/>
             </Field>
           </div>
         )}
