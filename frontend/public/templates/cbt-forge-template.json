@@ -3,10 +3,12 @@
     "title": "CBT Forge Question Template",
     "marking_mode": "overall",
     "overall_marking": { "correct": "4", "wrong": "-1", "unattempted": "0" },
-    "section_marking_example": {
-      "Reasoning": { "correct": "2", "wrong": "-0.5", "unattempted": "0" },
-      "Numerical": { "correct": "4", "wrong": "-1", "unattempted": "0" }
-    }
+    "sections": [
+      { "name": "Reasoning", "duration_minutes": 20, "marking": { "correct": "2", "wrong": "-0.5", "unattempted": "0" } },
+      { "name": "Numerical", "duration_minutes": 25, "marking": { "correct": "4", "wrong": "-1", "unattempted": "0" } },
+      { "name": "Language", "duration_minutes": 20, "marking": { "correct": "2", "wrong": "0", "unattempted": "0" } },
+      { "name": "Visual Reasoning", "duration_minutes": 15, "marking": { "correct": "3", "wrong": "-1", "unattempted": "0" } }
+    ]
   },
   "questions": [
     {
@@ -28,16 +30,14 @@
     {
       "id": "Q3", "question_number": 3, "section": "Numerical", "question_type": "integer",
       "question_text": "What is 6 multiplied by 7?", "question_images": [], "options": [],
-      "answer_config": { "input_mode": "integer", "correct_answers": ["42"], "accepted_answers": [], "evaluation": "automatic" },
-      "numerical_answer": { "value": 42, "tolerance": "0", "allow_integer": true, "allow_decimal": false },
+      "answer": { "type": "integer", "value": 42 },
       "marking": { "correct": "4", "incorrect": "-1", "unattempted": "0", "override_default": false },
       "explanation": { "text": "6 x 7 = 42.", "images": [] }, "topic": "Arithmetic", "difficulty": "easy"
     },
     {
       "id": "Q4", "question_number": 4, "section": "Numerical", "question_type": "numerical_tolerance",
       "question_text": "Enter pi rounded to two decimal places.", "question_images": [], "options": [],
-      "answer_config": { "input_mode": "real_number", "correct_answers": ["3.14159"], "accepted_answers": [], "tolerance": "0.01", "evaluation": "automatic" },
-      "numerical_answer": { "value": "3.14159", "tolerance": "0.01", "allow_integer": true, "allow_decimal": true },
+      "answer": { "type": "numerical_tolerance", "value": "3.14159", "tolerance": "0.01" },
       "marking": { "correct": "4", "incorrect": "-1", "unattempted": "0", "override_default": false },
       "explanation": null, "topic": "Numerical", "difficulty": "medium"
     },

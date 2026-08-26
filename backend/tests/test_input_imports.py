@@ -7,6 +7,7 @@ import pytest
 from services.ai_service import AIServiceError, OpenRouterProvider
 from services.input_parser import InputValidationError, parse_input
 from services.question_normalizer import normalize_answer, normalize_options, normalize_questions
+from services.configuration_service import ConfigurationService
 from services.validation_service import ValidationService
 from services.text_service import parse_text
 from utils.files import TEST_DIR
@@ -92,6 +93,41 @@ def test_json_option_and_answer_formats() -> None:
     assert normalized[1].correct_answer == ["B"]
     assert normalize_options([{"id": "A", "text": "One"}])[0].id == "A"
     assert normalize_answer("Option B", normalize_options({"A": "One", "B": "Two"}))[0] == ["B"]
+
+
+def test_json_import_preserves_test_marking_and_integer_answer() -> None:
+    path = unit_dir() / "configured.json"
+    path.write_text(
+        """{
+          "test": {
+            "title": "Configured Import",
+            "marking_mode": "section",
+            "overall_marking": {"correct": "4", "wrong": "-1", "unattempted": "0"},
+            "sections": [{"name": "Numerical", "marking": {"correct": "5", "wrong": "-2", "unattempted": "0"}}]
+          },
+          "questions": [{
+            "id": "integer-1", "question_number": 1, "section": "Numerical",
+            "question_type": "integer", "question_text": "6 x 7?",
+            "answer": {"type": "integer", "value": 42}, "options": []
+          }]
+        }""",
+        encoding="utf-8",
+    )
+
+    parsed = parse_input(path)
+    question = normalize_questions(parsed.raw_questions)[0]
+    config = ConfigurationService().save_imported_configuration(
+        f"configured_{uuid4().hex[:8]}", [question], parsed.test_metadata
+    )
+
+    assert question.numerical_answer and str(question.numerical_answer.value) == "42"
+    assert question.answer_config.correct_answers == ["42"]
+    assert question.correct_answer == ["42"]
+    assert config.test.title == "Configured Import"
+    assert config.test.use_global_marking is False
+    assert config.test.global_marking.correct == "4"
+    assert config.sections[0].marking.correct == "5"
+    assert config.sections[0].marking.wrong == "-2"
 
 
 def test_malformed_question_is_preserved_for_review() -> None:

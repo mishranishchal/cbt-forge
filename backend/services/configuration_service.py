@@ -89,6 +89,57 @@ class ConfigurationService:
             sections=sections,
         )
 
+    def save_imported_configuration(
+        self,
+        test_id: str,
+        questions: list[Question],
+        metadata: dict,
+    ) -> TestConfiguration:
+        """Create the persisted test configuration supplied by a JSON import."""
+        base = self.default_configuration(test_id, questions)
+        mode = str(metadata.get("marking_mode", "overall")).strip().lower()
+        global_marking_data = metadata.get(
+            "overall_marking",
+            metadata.get("global_marking", {}),
+        )
+        if not isinstance(global_marking_data, dict):
+            global_marking_data = {}
+
+        base.test.title = str(metadata.get("title") or base.test.title)
+        base.test.description = str(metadata.get("description") or base.test.description)
+        base.test.instructions = str(metadata.get("instructions") or base.test.instructions)
+        base.test.use_global_marking = mode not in {"section", "section_wise", "section-wise"}
+        base.test.global_marking = MarkingScheme.model_validate({
+            "correct": global_marking_data.get("correct", base.test.global_marking.correct),
+            "wrong": global_marking_data.get("wrong", global_marking_data.get("incorrect", base.test.global_marking.wrong)),
+            "unattempted": global_marking_data.get("unattempted", base.test.global_marking.unattempted),
+        })
+
+        supplied_sections = metadata.get("sections", [])
+        if not isinstance(supplied_sections, list):
+            supplied_sections = []
+        by_name = {
+            str(item.get("name", "")).strip(): item
+            for item in supplied_sections
+            if isinstance(item, dict) and str(item.get("name", "")).strip()
+        }
+        for section in base.sections:
+            supplied = by_name.get(section.name)
+            if not supplied:
+                continue
+            section.description = str(supplied.get("description") or section.description)
+            section.duration_minutes = int(supplied.get("duration_minutes") or section.duration_minutes)
+            section.allow_section_switching = bool(supplied.get("allow_section_switching", section.allow_section_switching))
+            marking = supplied.get("marking", {})
+            if isinstance(marking, dict):
+                section.marking = MarkingScheme.model_validate({
+                    "correct": marking.get("correct", section.marking.correct),
+                    "wrong": marking.get("wrong", marking.get("incorrect", section.marking.wrong)),
+                    "unattempted": marking.get("unattempted", section.marking.unattempted),
+                })
+
+        return self.save(test_id, base)
+
     def validate(self, test_id: str, config: TestConfiguration | None = None) -> ConfigurationValidationResult:
         config = config or self.get_or_create(test_id)
         questions = self.load_questions(test_id)

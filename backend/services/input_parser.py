@@ -2,7 +2,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
 
-from services.json_service import parse_json
+from services.json_service import parse_json_document
 from services.ocr_service import OCRService, OCRUnavailableError
 from services.pdf_service import extract_images, get_page_count, render_page
 from services.text_service import parse_text
@@ -24,6 +24,7 @@ class ParsedInput:
     pages_ocr: int = 0
     pages_failed: int = 0
     warnings: list[str] = field(default_factory=list)
+    test_metadata: dict[str, Any] = field(default_factory=dict)
 
 
 def parse_input(file_path: str | Path, test_id: str | None = None) -> ParsedInput:
@@ -36,7 +37,8 @@ def parse_input(file_path: str | Path, test_id: str | None = None) -> ParsedInpu
             text = path.read_text(encoding="latin-1")
         return ParsedInput(kind="txt", raw_questions=parse_text(text), text=text)
     if suffix == ".json":
-        return ParsedInput(kind="json", raw_questions=parse_json(path))
+        questions, test_metadata = parse_json_document(path)
+        return ParsedInput(kind="json", raw_questions=questions, test_metadata=test_metadata)
     if suffix != ".pdf":
         raise InputValidationError("Unsupported file type. Supported formats: PDF, TXT, JSON.")
     return _parse_pdf(path, test_id)

@@ -695,6 +695,13 @@ def normalize_question(
         ),
     )
 
+    # Canonical JSON can express answers as typed objects, for example:
+    # {"answer": {"type": "integer", "value": 42}}
+    # or {"answer": {"type": "multiple_select", "values": ["A", "C"]}}.
+    typed_answer = raw_answer if isinstance(raw_answer, dict) else None
+    if typed_answer is not None:
+        raw_answer = typed_answer.get("values", typed_answer.get("value"))
+
     # --------------------------------------------------------------
     # Determine question type
     # --------------------------------------------------------------
@@ -765,6 +772,9 @@ def normalize_question(
             "answer_value"
         )
 
+    if numerical_source is None and typed_answer is not None:
+        numerical_source = typed_answer
+
     # Example:
     #
     # {
@@ -798,6 +808,9 @@ def normalize_question(
         }
         else None
     )
+
+    if numerical_answer is not None and numerical_answer.value is not None:
+        answer = [str(numerical_answer.value)]
 
     # --------------------------------------------------------------
     # Descriptive / short answers

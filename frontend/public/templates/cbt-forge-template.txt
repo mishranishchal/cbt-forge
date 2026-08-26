@@ -1,5 +1,6 @@
 # CBT Forge TXT Question Template
-# Configure the overall or section-wise marking mode in Configure after import.
+# TXT imports preserve per-question marks. Configure overall or section-wise
+# test/section marks in Configure after import; JSON can set them during import.
 # Per-question marks below override the configured test/section rule.
 # For multiple-select answers, use commas, spaces, semicolons, or separate lines.
 

@@ -36,6 +36,7 @@ class ExtractionService:
         image_assets = [record.image_asset for record in files if record.image_asset]
         asset_index = {asset.filename.casefold(): asset for asset in image_assets if asset and asset.filename}
         report: dict[str, Any] = {"pages_total": 0, "pages_processed": 0, "pages_ocr": 0, "pages_failed": 0, "warnings_list": []}
+        imported_test_metadata: dict[str, Any] = {}
         for record in files:
             if record.image_asset:
                 continue
@@ -45,6 +46,8 @@ class ExtractionService:
                 raise RuntimeError(str(exc)) from exc
             self._merge_report(report, parsed)
             if record.role == "question_paper":
+                if parsed.kind == "json" and parsed.test_metadata:
+                    imported_test_metadata = parsed.test_metadata
                 questions.extend(self._questions_from_parsed(parsed, len(questions), asset_index))
             elif parsed.kind == "json":
                 report["warnings_list"].append(f"{record.filename} was ignored because JSON imports must be a question paper.")
@@ -57,7 +60,7 @@ class ExtractionService:
         questions = self._match_answers_and_explanations(questions, parse_answer_key(answer_key_text), parse_explanations(explanation_text))
         self._scope_question_ids(test_id, questions)
         questions = self.validation_service.validate_questions(questions)
-        return self._persist(test_id, questions, report)
+        return self._persist(test_id, questions, report, imported_test_metadata)
 
     def _questions_from_parsed(self, parsed: ParsedInput, start_index: int, asset_index: dict[str, object] | None = None) -> list[Question]:
         questions: list[Question] = []
@@ -103,7 +106,7 @@ class ExtractionService:
             report[field] += getattr(parsed, field)
         report["warnings_list"].extend(parsed.warnings)
 
-    def _persist(self, test_id: str, questions: list[Question], report: dict[str, Any]) -> tuple[list[Question], ExtractionSummary]:
+    def _persist(self, test_id: str, questions: list[Question], report: dict[str, Any], imported_test_metadata: dict[str, Any] | None = None) -> tuple[list[Question], ExtractionSummary]:
         data = summarize_validation(questions)
         data.update({key: report.get(key, 0) for key in ("pages_total", "pages_processed", "pages_ocr", "pages_failed")})
         data["warnings_list"] = list(dict.fromkeys(report.get("warnings_list", [])))
@@ -111,6 +114,14 @@ class ExtractionService:
         directory = test_dir(test_id)
         write_json(directory / "questions.json", [question.model_dump(mode="json") for question in questions])
         write_json(directory / "test.json", {"test_id": test_id, "status": "extracted", "summary": summary.model_dump()})
+        if imported_test_metadata:
+            from services.configuration_service import ConfigurationService
+
+            ConfigurationService().save_imported_configuration(
+                test_id,
+                questions,
+                imported_test_metadata,
+            )
         return questions, summary
 
     def _scope_question_ids(self, test_id: str, questions: list[Question]) -> None:
