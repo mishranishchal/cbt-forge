@@ -152,22 +152,38 @@ class CbtService:
             raise HTTPException(status_code=400, detail="Invalid question ID for this attempt.")
         existing = self.store.get_response(attempt_id, question_id) or {
             "selected_answers": [],
+            "numeric_value": None,
+            "text_answer": None,
             "visited": False,
             "marked_for_review": False,
             "time_spent_seconds": 0,
         }
         selected = update.selected_answers if update.selected_answers is not None else existing["selected_answers"]
+        # model_fields_set distinguishes an omitted field from an explicit
+        # null sent by Clear response.
+        numeric_value = (
+            update.numeric_value
+            if "numeric_value" in update.model_fields_set
+            else existing.get("numeric_value")
+        )
+        text_answer = (
+            update.text_answer
+            if "text_answer" in update.model_fields_set
+            else existing.get("text_answer")
+        )
         visited = True if update.visited is None else update.visited
         marked = existing["marked_for_review"] if update.marked_for_review is None else update.marked_for_review
         time_spent = existing["time_spent_seconds"]
         if update.time_spent_seconds is not None:
             time_spent = max(time_spent, update.time_spent_seconds)
-        status = derive_runtime_status(visited, selected, marked)
+        status = derive_runtime_status(visited, selected, marked, numeric_value, text_answer)
         saved = self.store.upsert_response(
             attempt_id,
             question_id,
             {
                 "selected_answers": selected,
+                "numeric_value": numeric_value,
+                "text_answer": text_answer,
                 "visited": visited,
                 "marked_for_review": marked,
                 "status": status,

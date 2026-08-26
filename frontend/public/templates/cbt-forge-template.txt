@@ -1,13 +1,56 @@
 [SECTION: Reasoning]
 
-Q1. Example question?
+Q1. Example MCQ question?
+TYPE: single_choice
 A. Option A
 B. Option B
 C. Option C
 D. Option D
-
 ANSWER: B
 EXPLANATION:
-Example explanation.
+Option B is correct.
 TOPIC: Example
 DIFFICULTY: Easy
+
+Q2. Select all prime numbers.
+TYPE: multiple_select
+A. 2
+B. 4
+C. 5
+D. 9
+ANSWER: A, C
+CORRECT_MARKS: 2
+INCORRECT_MARKS: -0.5
+UNATTEMPTED_MARKS: 0
+TOPIC: Number System
+DIFFICULTY: Medium
+
+[SECTION: Numerical]
+
+Q3. What is 6 multiplied by 7?
+TYPE: integer
+ANSWER: 42
+TOPIC: Arithmetic
+DIFFICULTY: Easy
+
+Q4. Enter pi rounded to two decimal places.
+TYPE: numerical_tolerance
+ANSWER: 3.14159
+TOLERANCE: 0.01
+TOPIC: Numerical
+DIFFICULTY: Medium
+
+[SECTION: Language]
+
+Q5. Name the capital of India.
+TYPE: short_answer
+ANSWER: New Delhi
+TOPIC: General Knowledge
+DIFFICULTY: Easy
+
+Q6. Explain the difference between a fact and an opinion.
+TYPE: long_answer
+TOPIC: Writing
+DIFFICULTY: Medium
+
+Use the JSON template for image-based questions and for complete overall or section-wise test configuration.

@@ -382,7 +382,7 @@
 
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
-import { bulkUpdateQuestions, deleteQuestion, duplicateQuestion, getQuestions, imageUrl, organizeQuestions, reorderQuestions, updateQuestion } from "@/lib/api";
+import { bulkUpdateQuestions, createQuestion, deleteQuestion, duplicateQuestion, getQuestions, imageUrl, organizeQuestions, reorderQuestions, updateQuestion } from "@/lib/api";
 import type { Question, ValidationStatus } from "@/lib/types";
 import { QuestionEditor } from "./QuestionEditor";
 
@@ -440,6 +440,7 @@ export function AdvancedReviewClient({ testId }: { testId: string }) {
   }
 
   async function organize(){setSaving(true);try{setQuestions(await organizeQuestions(testId));setMessage("Questions organized.");}catch(e){setError(e instanceof Error?e.message:"Organization failed.");}finally{setSaving(false);}}
+  async function addQuestion(){setSaving(true);setError("");try{const created=await createQuestion(testId);const next=await getQuestions(testId);setQuestions(next);setSelectedId(created.id);setDraft(created);setEditing(true);setMessage("New question added. Complete its type, answer, marking, and content.");}catch(e){setError(e instanceof Error?e.message:"Could not add question.");}finally{setSaving(false);}}
   async function duplicate(){if(!selected)return;try{const copy=await duplicateQuestion(selected.id);setQuestions(await getQuestions(testId));setSelectedId(copy.id);}catch(e){setError(e instanceof Error?e.message:"Duplicate failed.");}}
   async function remove(){if(!selected||!confirm("Delete this question?"))return;try{await deleteQuestion(selected.id);const q=questions.filter(x=>x.id!==selected.id);setQuestions(q);setSelectedId(q[0]?.id??"");}catch(e){setError(e instanceof Error?e.message:"Delete failed.");}}
   async function bulk(){const ids=[...selectedBulk];if(!ids.length)return;try{const updated=await bulkUpdateQuestions({question_ids:ids,section:section||undefined,topic:topic||undefined,difficulty:difficulty||undefined});setQuestions(q=>q.map(x=>updated.find(y=>y.id===x.id)??x));setSelectedBulk(new Set());setMessage("Bulk update saved.");}catch(e){setError(e instanceof Error?e.message:"Bulk update failed.");}}
@@ -449,7 +450,7 @@ export function AdvancedReviewClient({ testId }: { testId: string }) {
 
   return <main className="min-h-screen bg-[#f7f8fb] px-4 py-5"><div className="mx-auto max-w-7xl space-y-5">
     <header className="rounded-lg border border-line bg-white p-5 shadow-panel">
-      <div className="flex flex-wrap justify-between gap-3"><div><div className="text-sm font-semibold uppercase text-accent">CBT Forge</div><h1 className="text-2xl font-semibold">Question Review</h1><p className="text-sm text-steel">Test {testId}</p></div><div className="flex gap-2"><button className="rounded border border-line px-3 py-2 text-sm" disabled={!editing||saving} onClick={()=>void saveDraft()}>Save</button><button className="rounded border border-line px-3 py-2 text-sm" disabled={saving} onClick={()=>void organize()}>Organize</button><Link className="rounded bg-forge px-3 py-2 text-sm text-white" href={`/configure/${testId}`}>Configure</Link></div></div>
+      <div className="flex flex-wrap justify-between gap-3"><div><div className="text-sm font-semibold uppercase text-accent">CBT Forge</div><h1 className="text-2xl font-semibold">Question Review</h1><p className="text-sm text-steel">Test {testId}</p></div><div className="flex gap-2"><button className="rounded border border-line px-3 py-2 text-sm" disabled={saving} onClick={()=>void addQuestion()}>Add Question</button><button className="rounded border border-line px-3 py-2 text-sm" disabled={!editing||saving} onClick={()=>void saveDraft()}>Save</button><button className="rounded border border-line px-3 py-2 text-sm" disabled={saving} onClick={()=>void organize()}>Organize</button><Link className="rounded bg-forge px-3 py-2 text-sm text-white" href={`/configure/${testId}`}>Configure</Link></div></div>
       <div className="mt-4 grid gap-3 md:grid-cols-6"><Stat label="Questions" value={questions.length}/><Stat label="Valid" value={questions.filter(q=>q.validation_status==="valid").length}/><Stat label="Warnings" value={questions.filter(q=>q.validation_status==="warning").length}/><Stat label="Errors" value={questions.filter(q=>q.validation_status==="error").length}/><Stat label="Answered Keys" value={questions.filter(q=>q.answer_config.correct_answers.length).length}/><Stat label="Images" value={questions.filter(q=>q.question_images.length||q.question_type==="image_based").length}/></div>
     </header>
     {error&&<div className="rounded border border-red-200 bg-red-50 p-3 text-sm text-red-700">{error}</div>}
@@ -485,4 +486,3 @@ export function AdvancedReviewClient({ testId }: { testId: string }) {
   </div></main>
 }
 function Stat({label,value}:{label:string;value:number|string}){return <div className="rounded border border-line bg-[#fafbfc] p-3"><div className="text-xs uppercase text-steel">{label}</div><div className="text-lg font-semibold">{value}</div></div>}
-

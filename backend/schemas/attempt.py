@@ -29,6 +29,8 @@ class QuestionRuntimeStatus(str, Enum):
 
 class ResponseUpdate(BaseModel):
     selected_answers: list[str] | None = None
+    numeric_value: str | None = None
+    text_answer: str | None = None
     visited: bool | None = None
     marked_for_review: bool | None = None
     time_spent_seconds: int | None = Field(default=None, ge=0)

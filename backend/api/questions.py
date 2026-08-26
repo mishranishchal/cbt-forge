@@ -42,6 +42,12 @@ async def get_test_questions(test_id: str) -> list[Question]:
     return await get_questions(test_id)
 
 
+@router.post("/tests/{test_id}/questions", response_model=Question)
+async def add_question(test_id: str, payload: dict) -> Question:
+    _validate_id(test_id, "test ID")
+    return QuestionBankService().add(test_id, payload)
+
+
 @router.get("/tests/{test_id}")
 async def get_test(test_id: str) -> dict:
     _validate_id(test_id, "test ID")

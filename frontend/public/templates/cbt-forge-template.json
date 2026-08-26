@@ -1,27 +1,68 @@
 {
+  "test": {
+    "title": "CBT Forge Question Template",
+    "marking_mode": "overall",
+    "overall_marking": { "correct": "4", "wrong": "-1", "unattempted": "0" },
+    "section_marking_example": {
+      "Reasoning": { "correct": "2", "wrong": "-0.5", "unattempted": "0" },
+      "Numerical": { "correct": "4", "wrong": "-1", "unattempted": "0" }
+    }
+  },
   "questions": [
     {
-      "id": "example-1",
-      "question_number": 1,
-      "section": "Reasoning",
-      "topic": "Example",
-      "subtopic": null,
-      "question_type": "single_choice",
-      "question_text": "Example question?",
-      "images": [],
-      "options": [
-        { "id": "A", "text": "Option A" },
-        { "id": "B", "text": "Option B" },
-        { "id": "C", "text": "Option C" },
-        { "id": "D", "text": "Option D" }
-      ],
-      "correct_answer": ["B"],
-      "explanation": "Example explanation.",
-      "difficulty": "easy",
-      "source_page": null,
-      "confidence": 1.0,
-      "validation_status": "pending",
-      "warnings": []
+      "id": "Q1", "question_number": 1, "section": "Reasoning", "question_type": "single_choice",
+      "question_text": "Example single-choice question?", "question_images": [],
+      "options": [{ "id": "A", "text": "Option A", "images": [] }, { "id": "B", "text": "Option B", "images": [] }],
+      "answer_config": { "input_mode": "single_choice", "correct_answers": ["B"], "accepted_answers": [], "evaluation": "automatic" },
+      "correct_answer": ["B"], "marking": { "correct": "4", "incorrect": "-1", "unattempted": "0", "override_default": false },
+      "explanation": { "text": "Option B is correct.", "images": [] }, "topic": "Example", "difficulty": "easy"
+    },
+    {
+      "id": "Q2", "question_number": 2, "section": "Reasoning", "question_type": "multiple_select",
+      "question_text": "Select every correct statement.", "question_images": [],
+      "options": [{ "id": "A", "text": "First correct statement", "images": [] }, { "id": "B", "text": "Incorrect statement", "images": [] }, { "id": "C", "text": "Second correct statement", "images": [] }],
+      "answer_config": { "input_mode": "multiple_select", "correct_answers": ["A", "C"], "accepted_answers": [], "evaluation": "automatic" },
+      "marking": { "correct": "2", "incorrect": "-0.5", "unattempted": "0", "override_default": true },
+      "explanation": null, "topic": "Multiple Select", "difficulty": "medium"
+    },
+    {
+      "id": "Q3", "question_number": 3, "section": "Numerical", "question_type": "integer",
+      "question_text": "What is 6 multiplied by 7?", "question_images": [], "options": [],
+      "answer_config": { "input_mode": "integer", "correct_answers": ["42"], "accepted_answers": [], "evaluation": "automatic" },
+      "numerical_answer": { "value": 42, "tolerance": "0", "allow_integer": true, "allow_decimal": false },
+      "marking": { "correct": "4", "incorrect": "-1", "unattempted": "0", "override_default": false },
+      "explanation": { "text": "6 x 7 = 42.", "images": [] }, "topic": "Arithmetic", "difficulty": "easy"
+    },
+    {
+      "id": "Q4", "question_number": 4, "section": "Numerical", "question_type": "numerical_tolerance",
+      "question_text": "Enter pi rounded to two decimal places.", "question_images": [], "options": [],
+      "answer_config": { "input_mode": "real_number", "correct_answers": ["3.14159"], "accepted_answers": [], "tolerance": "0.01", "evaluation": "automatic" },
+      "numerical_answer": { "value": "3.14159", "tolerance": "0.01", "allow_integer": true, "allow_decimal": true },
+      "marking": { "correct": "4", "incorrect": "-1", "unattempted": "0", "override_default": false },
+      "explanation": null, "topic": "Numerical", "difficulty": "medium"
+    },
+    {
+      "id": "Q5", "question_number": 5, "section": "Language", "question_type": "short_answer",
+      "question_text": "Name the capital of India.", "question_images": [], "options": [],
+      "answer_config": { "input_mode": "text", "correct_answers": ["New Delhi"], "accepted_answers": ["Delhi"], "case_sensitive": false, "evaluation": "automatic" },
+      "marking": { "correct": "2", "incorrect": "0", "unattempted": "0", "override_default": true },
+      "explanation": null, "topic": "General Knowledge", "difficulty": "easy"
+    },
+    {
+      "id": "Q6", "question_number": 6, "section": "Language", "question_type": "long_answer",
+      "question_text": "Explain the difference between a fact and an opinion.", "question_images": [], "options": [],
+      "answer_config": { "input_mode": "long_text", "correct_answers": [], "accepted_answers": [], "evaluation": "manual" },
+      "marking": { "correct": "5", "incorrect": "0", "unattempted": "0", "maximum_marks": "5", "override_default": true },
+      "explanation": null, "topic": "Writing", "difficulty": "medium"
+    },
+    {
+      "id": "Q7", "question_number": 7, "section": "Visual Reasoning", "question_type": "image_based",
+      "question_text": "Choose the figure that completes the sequence.", "question_images": [{ "filename": "sequence.png" }],
+      "options": [{ "id": "A", "text": "", "images": [{ "filename": "sequence-a.png" }] }, { "id": "B", "text": "", "images": [{ "filename": "sequence-b.png" }] }],
+      "answer_config": { "input_mode": "single_choice", "correct_answers": ["B"], "accepted_answers": [], "evaluation": "automatic" },
+      "marking": { "correct": "3", "incorrect": "-1", "unattempted": "0", "override_default": true },
+      "explanation": { "text": "The shape rotates clockwise.", "images": [{ "filename": "sequence-solution.png" }] },
+      "topic": "Non Verbal Reasoning", "difficulty": "medium"
     }
   ]
 }

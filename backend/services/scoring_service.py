@@ -387,25 +387,29 @@ def derive_runtime_status(
     visited: bool,
     selected_answers: list[str],
     marked_for_review: bool,
+    numeric_value: str | None = None,
+    text_answer: str | None = None,
 ) -> str:
     selected = normalize_answers(
         selected_answers
     )
 
+    has_typed_answer = bool(str(numeric_value or "").strip() or str(text_answer or "").strip())
     if (
         not visited
         and not selected
+        and not has_typed_answer
         and not marked_for_review
     ):
         return "NOT_VISITED"
 
-    if marked_for_review and selected:
+    if marked_for_review and (selected or has_typed_answer):
         return "ANSWERED_AND_MARKED"
 
     if marked_for_review:
         return "MARKED_FOR_REVIEW"
 
-    if selected:
+    if selected or has_typed_answer:
         return "ANSWERED"
 
     return "NOT_ANSWERED"
@@ -431,6 +435,12 @@ def extract_response_values(
         response: value
         selected_answer: value
     """
+    numeric_value = response.get("numeric_value")
+    if numeric_value is not None and str(numeric_value).strip():
+        return [str(numeric_value)]
+    text_answer = response.get("text_answer")
+    if text_answer is not None and str(text_answer).strip():
+        return [str(text_answer)]
     selected = response.get(
         "selected_answers"
     )
@@ -1202,6 +1212,8 @@ def score_attempt(
                 visited,
                 selected,
                 marked_for_review,
+                response.get("numeric_value"),
+                response.get("text_answer"),
             )
         )
 

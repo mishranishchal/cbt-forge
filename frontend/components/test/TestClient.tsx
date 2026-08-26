@@ -153,6 +153,32 @@ function isMultipleChoice(question: Question) {
   );
 }
 
+function effectiveMarking(
+  configuration: TestConfiguration,
+  question: Question,
+  section?: TestSection
+) {
+  if (question.marking?.override_default) {
+    return {
+      correct: question.marking.correct,
+      incorrect: question.marking.incorrect,
+      unattempted: question.marking.unattempted,
+      source: "Question",
+    };
+  }
+
+  const marking = configuration.test.use_global_marking
+    ? configuration.test.global_marking
+    : section?.marking ?? configuration.test.global_marking;
+
+  return {
+    correct: marking.correct,
+    incorrect: marking.wrong,
+    unattempted: marking.unattempted,
+    source: configuration.test.use_global_marking ? "Overall" : "Section",
+  };
+}
+
 function isAnswered(response?: AttemptResponse) {
   if (!response) return false;
 
@@ -770,21 +796,9 @@ export function TestClient({ testId }: { testId: string }) {
               </div>
 
               <div className="font-semibold">
-                +
-                {
-                  configuration?.test.global_marking
-                    .correct
-                }{" "}
-                /{" "}
-                {
-                  configuration?.test.global_marking
-                    .wrong
-                }{" "}
-                /{" "}
-                {
-                  configuration?.test.global_marking
-                    .unattempted
-                }
+                {configuration?.test.use_global_marking
+                  ? `Overall: +${configuration.test.global_marking.correct} / ${configuration.test.global_marking.wrong} / ${configuration.test.global_marking.unattempted}`
+                  : "Section-wise marking"}
               </div>
             </div>
           </div>
@@ -1002,6 +1016,14 @@ export function TestClient({ testId }: { testId: string }) {
         ? "border-amber-300 bg-amber-50 text-amber-800"
         : "border-line bg-white text-ink";
 
+  const resolvedMarking = currentQuestion
+    ? effectiveMarking(
+        attempt.configuration,
+        currentQuestion,
+        currentSection
+      )
+    : null;
+
   return (
     <main className="min-h-screen bg-[#f7f8fb]">
       <header className="sticky top-0 z-20 border-b border-line bg-white px-4 py-3 shadow-sm">
@@ -1104,6 +1126,11 @@ export function TestClient({ testId }: { testId: string }) {
                       }{" "}
                       {saving ? "| Saving..." : ""}
                     </div>
+                    {resolvedMarking ? (
+                      <div className="mt-2 text-xs font-semibold text-steel">
+                        {currentQuestion.question_type.replaceAll("_", " ")} | {resolvedMarking.source} marks: +{resolvedMarking.correct} / {resolvedMarking.incorrect} / {resolvedMarking.unattempted}
+                      </div>
+                    ) : null}
                   </div>
 
                   <div className="text-sm text-steel">

@@ -76,6 +76,8 @@ CREATE TABLE IF NOT EXISTS responses (
     attempt_id TEXT NOT NULL,
     question_id TEXT NOT NULL,
     selected_answers TEXT NOT NULL DEFAULT '[]',
+    numeric_value TEXT,
+    text_answer TEXT,
     visited INTEGER NOT NULL DEFAULT 0,
     marked_for_review INTEGER NOT NULL DEFAULT 0,
     status TEXT NOT NULL,
@@ -124,4 +126,11 @@ def get_connection() -> sqlite3.Connection:
 def init_db() -> None:
     with get_connection() as connection:
         connection.executescript(SCHEMA)
+        # Existing local installations keep their response history. Add the
+        # typed-response columns in place when upgrading from choice-only CBT.
+        columns = {row["name"] for row in connection.execute("PRAGMA table_info(responses)")}
+        if "numeric_value" not in columns:
+            connection.execute("ALTER TABLE responses ADD COLUMN numeric_value TEXT")
+        if "text_answer" not in columns:
+            connection.execute("ALTER TABLE responses ADD COLUMN text_answer TEXT")
         connection.commit()

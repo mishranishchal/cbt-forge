@@ -176,6 +176,10 @@ export function QuestionEditor({
           <div className="mt-3 max-w-sm"><Field label="Tolerance"><input className={input} value={question.answer_config.tolerance ?? ""} placeholder="0.01" onChange={e=>patchAnswer({tolerance:e.target.value || null})}/></Field></div>
         )}
 
+        {["integer", "real_number", "numerical_tolerance"].includes(question.question_type) && (
+          <div className="mt-3 grid gap-3 md:grid-cols-2"><Field label="Numerical answer"><input className={input} value={question.numerical_answer?.value ?? correct[0] ?? ""} placeholder={question.question_type === "integer" ? "42" : "10.5"} onChange={e=>{const value=e.target.value;patch({ numerical_answer:{ ...(question.numerical_answer ?? {}), value, tolerance: question.question_type === "numerical_tolerance" ? question.answer_config.tolerance ?? "0" : "0" }, correct_answer:value?[value]:null, answer_config:{...question.answer_config,correct_answers:value?[value]:[]} }); }}/></Field><Field label="Tolerance"><input className={input} disabled={question.question_type !== "numerical_tolerance"} value={question.answer_config.tolerance ?? question.numerical_answer?.tolerance ?? "0"} onChange={e=>patch({ numerical_answer:{ ...(question.numerical_answer ?? {}), value:question.numerical_answer?.value ?? correct[0] ?? null, tolerance:e.target.value || "0" }, answer_config:{...question.answer_config,tolerance:e.target.value || null} })}/></Field></div>
+        )}
+
         {question.question_type === "long_answer" && <div className="mt-3 rounded border border-amber-200 bg-amber-50 p-3 text-xs text-amber-800">Long answers are normally evaluated manually.</div>}
       </section>
 

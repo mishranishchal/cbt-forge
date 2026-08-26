@@ -4,6 +4,7 @@ from pathlib import Path
 from PIL import Image
 
 from schemas.question import Question, QuestionImage, QuestionType, ValidationStatus
+from services.scoring_service import parse_numeric
 from services.image_service import IMAGE_TYPES
 from utils.files import DATA_DIR, EXTRACTED_IMAGE_DIR, UPLOAD_DIR
 
@@ -215,41 +216,78 @@ class ValidationService:
                 )
                 status = ValidationStatus.error
 
-            if (
-                question.question_type
-                == QuestionType.single_choice
-                and len(question.options) < 2
-            ):
-                warnings.append(
-                    "Single-choice question should have "
-                    "at least two options."
-                )
-                status = ValidationStatus.error
+            choice_types = {
+                QuestionType.single_choice,
+                QuestionType.multiple_choice,
+                QuestionType.multiple_select,
+                QuestionType.true_false,
+                QuestionType.image_based,
+            }
+            numerical_types = {
+                QuestionType.integer,
+                QuestionType.real_number,
+                QuestionType.numerical_tolerance,
+            }
+            answers = (
+                question.answer_config.correct_answers
+                or question.correct_answer
+                or []
+            )
+            label = f"Q{question.question_number or question.id}"
 
-            # ===========================================================
-            # CORRECT ANSWER
-            # ===========================================================
-
-            if question.correct_answer:
-
-                missing = [
-                    answer
-                    for answer in question.correct_answer
-                    if answer.upper() not in option_ids
-                ]
-
-                if missing and option_ids:
-                    warnings.append(
-                        "Correct answer does not match an option."
-                    )
+            if question.question_type in choice_types:
+                if question.question_type != QuestionType.image_based and len(question.options) < 2:
+                    warnings.append(f"{label}: Choice question requires at least two options.")
                     status = ValidationStatus.error
+                if not answers:
+                    warnings.append(f"{label}: Correct answer is required for this question type.")
+                    if status != ValidationStatus.error:
+                        status = ValidationStatus.warning
+                elif option_ids:
+                    missing = [answer for answer in answers if answer.upper() not in option_ids]
+                    if missing:
+                        warnings.append(f"{label}: Correct answer does not match an option.")
+                        status = ValidationStatus.error
 
-            else:
-
-                warnings.append(
-                    "Correct answer is missing or uncertain."
+            elif question.question_type in numerical_types:
+                value = (
+                    question.numerical_answer.value
+                    if question.numerical_answer is not None
+                    else (answers[0] if answers else None)
                 )
+                parsed = parse_numeric(value)
+                if parsed is None:
+                    if question.question_type == QuestionType.integer:
+                        warnings.append(f"{label}: Integer question requires answer.value to be a valid integer.")
+                    else:
+                        warnings.append(f"{label}: Numerical question requires answer.value to be a valid number.")
+                    status = ValidationStatus.error
+                elif question.question_type == QuestionType.integer and parsed != parsed.to_integral_value():
+                    warnings.append(f"{label}: Integer question requires answer.value to be a valid integer.")
+                    status = ValidationStatus.error
+                elif question.question_type == QuestionType.numerical_tolerance:
+                    tolerance = (
+                        question.numerical_answer.tolerance
+                        if question.numerical_answer is not None
+                        else question.answer_config.tolerance
+                    )
+                    if parse_numeric(tolerance) is None:
+                        warnings.append(f"{label}: Numerical tolerance requires a valid non-negative tolerance.")
+                        status = ValidationStatus.error
 
+            elif question.question_type == QuestionType.short_answer:
+                if not answers and not question.answer_config.accepted_answers:
+                    warnings.append(f"{label}: Short-answer question has no accepted answer.")
+                    if status != ValidationStatus.error:
+                        status = ValidationStatus.warning
+
+            elif question.question_type == QuestionType.long_answer:
+                # Long answers are valid without an answer key when reviewed manually.
+                pass
+
+            elif not answers:
+                # Preserve the legacy review signal for unclassified imports.
+                warnings.append("Correct answer is missing or uncertain.")
                 if status != ValidationStatus.error:
                     status = ValidationStatus.warning
 

@@ -399,7 +399,7 @@ class QuestionMarking(BaseModel):
 
     correct: str = "1"
 
-    wrong: str = "-0.25"
+    wrong: str = "0"
 
     unattempted: str = "0"
 

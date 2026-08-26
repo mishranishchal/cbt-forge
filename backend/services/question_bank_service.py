@@ -22,6 +22,8 @@ class QuestionBankService:
         return [Question.model_validate(item) for item in read_json(path)]
 
     def save(self, test_id: str, questions: list[Question]) -> list[Question]:
+        for index, question in enumerate(questions, start=1):
+            question.question_number = index
         validated = ValidationService().validate_questions(questions)
         write_json(self.questions_path(test_id), [question.model_dump(mode="json") for question in validated])
         test_path = test_dir(test_id) / "test.json"
@@ -29,6 +31,36 @@ class QuestionBankService:
         payload["summary"] = summarize_validation(validated)
         write_json(test_path, payload)
         return validated
+
+    def add(self, test_id: str, payload: dict) -> Question:
+        questions = self.load(test_id)
+        candidate = dict(payload)
+        candidate["id"] = f"q_{uuid4().hex}"
+        candidate.setdefault("question_number", len(questions) + 1)
+        candidate.setdefault("question_text", "New question")
+        candidate.setdefault("question_type", "single_choice")
+        candidate.setdefault("options", [{"id": "A", "text": ""}, {"id": "B", "text": ""}])
+        candidate.setdefault("answer_config", {"input_mode": "single_choice", "correct_answers": [], "accepted_answers": [], "evaluation": "automatic"})
+        candidate.setdefault("marking", {"correct": "1", "incorrect": "0", "unattempted": "0", "override_default": False})
+        question = Question.model_validate(candidate)
+        questions.append(question)
+        saved = self.save(test_id, questions)
+        self._assign_new_question_to_configuration(test_id, question)
+        return next(item for item in saved if item.id == question.id)
+
+    def _assign_new_question_to_configuration(self, test_id: str, question: Question) -> None:
+        from services.configuration_service import ConfigurationService
+
+        service = ConfigurationService()
+        path = service.configuration_path(test_id)
+        if not path.exists():
+            return
+        config = service.get_or_create(test_id)
+        target = next((section for section in config.sections if section.name == question.section), config.sections[0] if config.sections else None)
+        if target and question.id not in target.question_ids:
+            target.question_ids.append(question.id)
+            target.expected_question_count = len(target.question_ids)
+            service.save(test_id, config)
 
     def find_test_id_for_question(self, question_id: str) -> str | None:
         for path in TEST_DIR.glob("*/questions.json"):
@@ -60,6 +92,7 @@ class QuestionBankService:
             raise HTTPException(status_code=404, detail="Question not found.")
         questions = [question for question in self.load(test_id) if question.id != question_id]
         self.save(test_id, questions)
+        self._remove_question_from_configuration(test_id, question_id)
 
     def duplicate(self, question_id: str) -> Question:
         test_id = self.find_test_id_for_question(question_id)
@@ -117,7 +150,37 @@ class QuestionBankService:
         for index, question in enumerate(ordered, start=1):
             if question.question_number is None:
                 question.question_number = index
-        return self.save(request.test_id, ordered)
+        saved = self.save(request.test_id, ordered)
+        self._reorder_configuration_questions(request.test_id, saved)
+        return saved
+
+    def _remove_question_from_configuration(self, test_id: str, question_id: str) -> None:
+        from services.configuration_service import ConfigurationService
+
+        service = ConfigurationService()
+        path = service.configuration_path(test_id)
+        if not path.exists():
+            return
+        config = service.get_or_create(test_id)
+        for section in config.sections:
+            if question_id in section.question_ids:
+                section.question_ids = [item for item in section.question_ids if item != question_id]
+                section.expected_question_count = len(section.question_ids)
+        service.save(test_id, config)
+
+    def _reorder_configuration_questions(self, test_id: str, questions: list[Question]) -> None:
+        from services.configuration_service import ConfigurationService
+
+        service = ConfigurationService()
+        path = service.configuration_path(test_id)
+        if not path.exists():
+            return
+        config = service.get_or_create(test_id)
+        position = {question.id: index for index, question in enumerate(questions)}
+        for section in config.sections:
+            section.question_ids.sort(key=lambda question_id: position.get(question_id, len(position)))
+            section.expected_question_count = len(section.question_ids)
+        service.save(test_id, config)
 
     async def organize_missing_metadata(self, test_id: str) -> list[Question]:
         questions = self.load(test_id)

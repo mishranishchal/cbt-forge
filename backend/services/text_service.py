@@ -4,7 +4,11 @@ from typing import Any
 
 QUESTION_RE = re.compile(r"^\s*(?:Q\s*)?(\d+)\s*[.)-]\s*(.*)$|^\s*Question\s+(\d+)\s*[:.)-]?\s*(.*)$", re.I)
 OPTION_RE = re.compile(r"^\s*([A-H])\s*[.)-]\s*(.+)$", re.I)
-FIELD_RE = re.compile(r"^\s*(ANSWER|EXPLANATION|TOPIC|DIFFICULTY)\s*:\s*(.*)$", re.I)
+FIELD_RE = re.compile(
+    r"^\s*(ANSWER|EXPLANATION|TOPIC|DIFFICULTY|TYPE|QUESTION_TYPE|TOLERANCE|"
+    r"CORRECT_MARKS|INCORRECT_MARKS|UNATTEMPTED_MARKS)\s*:\s*(.*)$",
+    re.I,
+)
 SECTION_RE = re.compile(r"^\s*\[SECTION\s*:\s*(.+?)\]\s*$", re.I)
 
 
@@ -52,6 +56,18 @@ def parse_text(text: str) -> list[dict[str, Any]]:
                 current["answer"] = value
             elif field == "explanation":
                 current["_explanation_lines"] = [value] if value else []
+            elif field in {"type", "question_type"}:
+                current["question_type"] = value
+            elif field == "tolerance":
+                current["tolerance"] = value
+            elif field in {"correct_marks", "incorrect_marks", "unattempted_marks"}:
+                marking = current.setdefault("marking", {})
+                marking[{
+                    "correct_marks": "correct",
+                    "incorrect_marks": "wrong",
+                    "unattempted_marks": "unattempted",
+                }[field]] = value
+                marking["override_default"] = True
             else:
                 current[field] = value
             mode = field

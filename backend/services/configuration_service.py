@@ -83,7 +83,7 @@ class ConfigurationService:
                 timing=TimingConfig(mode=TimingMode.section if len(sections) > 1 else TimingMode.single, total_minutes=max(1, total_minutes)),
                 navigation=NavigationConfig(),
                 behavior=BehaviorConfig(),
-                global_marking=MarkingScheme(),
+                global_marking=MarkingScheme(correct="1", wrong="0", unattempted="0"),
                 use_global_marking=True,
             ),
             sections=sections,

@@ -559,7 +559,7 @@ def normalize_marking(
                 "wrong",
                 value.get(
                     "incorrect",
-                    "-0.25",
+                    "0",
                 ),
             ),
             unattempted=value.get(

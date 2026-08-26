@@ -47,6 +47,10 @@ export async function getQuestions(testId: string): Promise<Question[]> {
   return parseResponse(await fetch(`${API_BASE}/api/tests/${testId}/questions`));
 }
 
+export async function createQuestion(testId: string, payload: Partial<Question> = {}): Promise<Question> {
+  return parseResponse(await fetch(`${API_BASE}/api/tests/${testId}/questions`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) }));
+}
+
 export async function updateQuestion(question: Question): Promise<Question> {
   return parseResponse(
     await fetch(`${API_BASE}/api/questions/${question.id}`, {

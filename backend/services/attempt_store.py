@@ -91,6 +91,8 @@ class AttemptStore:
             "attempt_id": attempt_id,
             "question_id": question_id,
             "selected_answers": payload.get("selected_answers", existing["selected_answers"] if existing else []),
+            "numeric_value": payload.get("numeric_value", existing.get("numeric_value") if existing else None),
+            "text_answer": payload.get("text_answer", existing.get("text_answer") if existing else None),
             "visited": payload.get("visited", existing["visited"] if existing else False),
             "marked_for_review": payload.get("marked_for_review", existing["marked_for_review"] if existing else False),
             "status": payload.get("status") or (existing["status"] if existing else "NOT_VISITED"),
@@ -101,10 +103,12 @@ class AttemptStore:
             connection.execute(
                 """
                 INSERT INTO responses (
-                    attempt_id, question_id, selected_answers, visited, marked_for_review, status, time_spent_seconds, last_updated
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+                    attempt_id, question_id, selected_answers, numeric_value, text_answer, visited, marked_for_review, status, time_spent_seconds, last_updated
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 ON CONFLICT(attempt_id, question_id) DO UPDATE SET
                     selected_answers = excluded.selected_answers,
+                    numeric_value = excluded.numeric_value,
+                    text_answer = excluded.text_answer,
                     visited = excluded.visited,
                     marked_for_review = excluded.marked_for_review,
                     status = excluded.status,
@@ -115,6 +119,8 @@ class AttemptStore:
                     attempt_id,
                     question_id,
                     json.dumps(merged["selected_answers"]),
+                    merged["numeric_value"],
+                    merged["text_answer"],
                     int(merged["visited"]),
                     int(merged["marked_for_review"]),
                     merged["status"],
@@ -217,6 +223,8 @@ class AttemptStore:
             "attempt_id": row["attempt_id"],
             "question_id": row["question_id"],
             "selected_answers": json.loads(row["selected_answers"] or "[]"),
+            "numeric_value": row["numeric_value"] if "numeric_value" in row.keys() else None,
+            "text_answer": row["text_answer"] if "text_answer" in row.keys() else None,
             "visited": bool(row["visited"]),
             "marked_for_review": bool(row["marked_for_review"]),
             "status": row["status"],
